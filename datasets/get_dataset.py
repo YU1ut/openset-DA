@@ -1,8 +1,8 @@
 from torchvision import transforms
 
-from mnist import *
-from svhn import *
-from usps import *
+from .mnist import *
+from .svhn import *
+from .usps import *
 
 def get_dataset(task):
     if task == 's2m':
