@@ -70,7 +70,7 @@ class USPS(data.Dataset):
 
     def __len__(self):
         """Return size of dataset."""
-        return self.dataset_size
+        return len(self.train_data)
 
     def _check_exists(self):
         """Check if dataset is download and in right place."""
