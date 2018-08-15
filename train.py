@@ -1,21 +1,26 @@
 from __future__ import print_function
 import argparse
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets
+import torch.optim as optimizer
+
+from datasets.get_dataset import get_dataset
 import models
 import utils
-import numpy as np
-from torchvision import transforms
+
+NUM_CLASSES = 6
 
 # Training settings
 parser = argparse.ArgumentParser(description='Openset-DA SVHN -> MNIST Example')
+parser.add_argument('--task', choices=['s2m', 'u2m', 'm2u'], default='s2m',
+                    help='type of task')
 parser.add_argument('--batch-size', type=int, default=128, metavar='N',
-                    help='input batch size for training (default: 64)')
+                    help='input batch size for training (default: 128)')
 parser.add_argument('--epochs', type=int, default=200, metavar='N',
-                    help='number of epochs to train (default: 10)')
+                    help='number of epochs to train (default: 200)')
 parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.001)')
 parser.add_argument('--lr-rampdown-epochs', default=201, type=int, metavar='EPOCHS',
@@ -36,27 +41,12 @@ args = parser.parse_args()
 
 torch.backends.cudnn.benchmark = True
 
-svhn_dataset = datasets.SVHN('../data', split='train', download=True,
-                    transform=transforms.Compose([
-                       transforms.Resize(32),
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.4376, 0.4437, 0.4728), (0.1980, 0.2010, 0.1970))
-                   ]))
+source_dataset, target_dataset = get_dataset(args.task)
 
-mnist_dataset = datasets.MNIST('../data', train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.Resize(32),
-                       transforms.Lambda(lambda x: x.convert("RGB")),
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081))
-                   ]))
-
-svhn_dataset, mnist_dataset = utils.relabel_dataset(svhn_dataset, mnist_dataset)
-
-source_loader = torch.utils.data.DataLoader(svhn_dataset, 
+source_loader = torch.utils.data.DataLoader(source_dataset, 
     batch_size=args.batch_size, shuffle=True, num_workers=0)
 
-target_loader = torch.utils.data.DataLoader(mnist_dataset,
+target_loader = torch.utils.data.DataLoader(target_dataset,
     batch_size=args.batch_size, shuffle=True, num_workers=0)
 
 model = models.Net().cuda()
@@ -65,7 +55,7 @@ optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay,
                                 nesterov=True)
-
+                                
 if args.resume:
     print("=> loading checkpoint '{}'".format(args.resume))
     checkpoint = torch.load(args.resume)
@@ -80,6 +70,8 @@ criterion_bce = nn.BCELoss()
 criterion_cel = nn.CrossEntropyLoss()
 
 best_prec1 = 0
+best_pred_y = []
+best_gt_y = []
 global_step = 0
 total_steps = args.grl_rampup_epochs * len(source_loader)
 
@@ -148,7 +140,7 @@ def test(epoch):
 
     loss /= len(target_loader.dataset)
 
-    utils.cal_acc(true_y, pred_y, 6)
+    utils.cal_acc(true_y, pred_y, NUM_CLASSES)
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         loss, correct, len(target_loader.dataset),
@@ -164,6 +156,11 @@ def test(epoch):
             'best_prec1': best_prec1,
             'optimizer' : optimizer.state_dict(),
         }, is_best)
+        if is_best:
+            global best_gt_y
+            global best_pred_y
+            best_gt_y = true_y
+            best_pred_y = pred_y
 
 def adjust_learning_rate(optimizer, epoch, step_in_epoch, total_steps_in_epoch):
     lr = args.lr
@@ -175,6 +172,12 @@ def adjust_learning_rate(optimizer, epoch, step_in_epoch, total_steps_in_epoch):
         param_group['lr'] = lr
 
 
-for epoch in range(1, args.epochs + 1):
-    train(epoch)
-    test(epoch)
+try:
+    for epoch in range(1, args.epochs + 1):
+        train(epoch)
+        test(epoch)
+    print ("------Best Result-------")
+    utils.cal_acc(best_gt_y, best_pred_y, NUM_CLASSES)
+except KeyboardInterrupt:
+    print ("------Best Result-------")
+    utils.cal_acc(best_gt_y, best_pred_y, NUM_CLASSES)
