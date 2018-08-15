@@ -10,7 +10,7 @@ def get_dataset(task):
                     transform=transforms.Compose([
                        transforms.Resize(32),
                        transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                       transforms.Normalize((0.4376, 0.4437, 0.4728), (0.1980, 0.2010, 0.1970))
                    ]))
         
         test_dataset = MNIST('../data', train=True, download=True,
@@ -18,7 +18,7 @@ def get_dataset(task):
                     transforms.Resize(32),
                     transforms.Lambda(lambda x: x.convert("RGB")),
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                    transforms.Normalize((0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081))
                 ]))
     elif task == 'u2m':
         train_dataset = USPS('../data', train=True, download=True,
