@@ -51,7 +51,7 @@ target_loader = torch.utils.data.DataLoader(target_dataset,
 
 model = models.Net(task=args.task).cuda()
 
-if args.task='s2m':
+if args.task=='s2m':
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                     momentum=args.momentum,
                                     weight_decay=args.weight_decay,
@@ -82,7 +82,7 @@ def train(epoch):
     model.train()
     global global_step
     for batch_idx, (batch_s, batch_t) in enumerate(zip(source_loader, target_loader)):
-        adjust_learning_rate(optimizer, epoch, batch_idx, len(source_loader)) if args.task='s2m' else None
+        adjust_learning_rate(optimizer, epoch, batch_idx, len(source_loader)) if args.task=='s2m' else None
         p = global_step / total_steps
         constant = 2. / (1. + np.exp(-10 * p)) - 1
 
