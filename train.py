@@ -51,10 +51,13 @@ target_loader = torch.utils.data.DataLoader(target_dataset,
 
 model = models.Net(task=args.task).cuda()
 
-optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum,
-                                weight_decay=args.weight_decay,
-                                nesterov=True)
+if args.task='s2m':
+    optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                    momentum=args.momentum,
+                                    weight_decay=args.weight_decay,
+                                    nesterov=True)
+else:
+    optimizer = torch.optim.Adam(model.parameters(), args.lr)
                                 
 if args.resume:
     print("=> loading checkpoint '{}'".format(args.resume))
@@ -79,7 +82,7 @@ def train(epoch):
     model.train()
     global global_step
     for batch_idx, (batch_s, batch_t) in enumerate(zip(source_loader, target_loader)):
-        adjust_learning_rate(optimizer, epoch, batch_idx, len(source_loader))
+        adjust_learning_rate(optimizer, epoch, batch_idx, len(source_loader)) if args.task='s2m' else None
         p = global_step / total_steps
         constant = 2. / (1. + np.exp(-10 * p)) - 1
 
