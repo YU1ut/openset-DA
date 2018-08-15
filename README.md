@@ -19,5 +19,5 @@ CUDA_VISIBLE_DEVICES=<gpu_id> python train.py
 ## Result
 ||OS|OS*|ALL|UNK| 
 |:---|:---:|:---:|:---:|:---:|
-|This Code|67.8|65.1|73.7|81.3|
+|This Code|63.8|60.6|70.7|80.1|
 |Paper|63.0|59.1|71.0|82.3|
