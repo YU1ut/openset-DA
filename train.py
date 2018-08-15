@@ -49,7 +49,7 @@ source_loader = torch.utils.data.DataLoader(source_dataset,
 target_loader = torch.utils.data.DataLoader(target_dataset,
     batch_size=args.batch_size, shuffle=True, num_workers=0)
 
-model = models.Net().cuda()
+model = models.Net(task=args.task).cuda()
 
 optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
