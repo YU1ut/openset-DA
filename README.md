@@ -14,11 +14,11 @@ python train.py --task s2m --gpu <gpu_id>
 ```
 Run USPS -> MNIST
 ```
-python train.py --task u2m --gpu <gpu_id> --grl-rampup-epochs 30
+python train.py --task u2m --gpu <gpu_id> --grl-rampup-epochs 50
 ```
 Run MNIST -> USPS
 ```
-python train.py --task m2u --gpu <gpu_id> --grl-rampup-epochs 50
+python train.py --task m2u --gpu <gpu_id> --grl-rampup-epochs 30
 ```
 For more details and parameters, please refer to --help option.
 
