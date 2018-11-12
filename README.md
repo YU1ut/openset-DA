@@ -18,7 +18,7 @@ python train.py --task u2m --gpu <gpu_id> --grl-rampup-epochs 30
 ```
 Run MNIST -> USPS
 ```
-python train.py --task m2u --gpu <gpu_id> --grl-rampup-epochs 30
+python train.py --task m2u --gpu <gpu_id> --grl-rampup-epochs 50
 ```
 For more details and parameters, please refer to --help option.
 
