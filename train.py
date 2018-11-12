@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import os
 import numpy as np
 
 import torch
@@ -37,9 +38,12 @@ parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                     help='how many batches to wait before logging training status')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+parser.add_argument('--gpu', default='0', type=str, metavar='GPU',
+                    help='id(s) for CUDA_VISIBLE_DEVICES')
 args = parser.parse_args()
 
 torch.backends.cudnn.benchmark = True
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 source_dataset, target_dataset = get_dataset(args.task)
 
@@ -51,14 +55,11 @@ target_loader = torch.utils.data.DataLoader(target_dataset,
 
 model = models.Net(task=args.task).cuda()
 
-if args.task=='s2m':
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                    momentum=args.momentum,
-                                    weight_decay=args.weight_decay,
-                                    nesterov=True)
-else:
-    optimizer = torch.optim.Adam(model.parameters(), args.lr)
-                                
+optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                momentum=args.momentum,
+                                weight_decay=args.weight_decay,
+                                nesterov=True)
+                         
 if args.resume:
     print("=> loading checkpoint '{}'".format(args.resume))
     checkpoint = torch.load(args.resume)
@@ -82,7 +83,7 @@ def train(epoch):
     model.train()
     global global_step
     for batch_idx, (batch_s, batch_t) in enumerate(zip(source_loader, target_loader)):
-        adjust_learning_rate(optimizer, epoch, batch_idx, len(source_loader)) if args.task=='s2m' else None
+        adjust_learning_rate(optimizer, epoch, batch_idx, len(source_loader))
         p = global_step / total_steps
         constant = 2. / (1. + np.exp(-10 * p)) - 1
 
@@ -173,7 +174,6 @@ def adjust_learning_rate(optimizer, epoch, step_in_epoch, total_steps_in_epoch):
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
-
 
 try:
     for epoch in range(1, args.epochs + 1):

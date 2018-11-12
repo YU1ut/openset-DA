@@ -7,10 +7,12 @@ import gzip
 import os
 import pickle
 import urllib
+from PIL import Image
 
 import numpy as np
 import torch
 import torch.utils.data as data
+from torch.utils.data.sampler import WeightedRandomSampler
 from torchvision import datasets, transforms
 
 
@@ -53,8 +55,7 @@ class USPS(data.Dataset):
             self.train_data = self.train_data[indices[0:self.dataset_size], ::]
             self.train_labels = self.train_labels[indices[0:self.dataset_size]]
         self.train_data *= 255.0
-        self.train_data = self.train_data.transpose(
-            (0, 2, 3, 1))  # convert to HWC
+        self.train_data = np.squeeze(self.train_data).astype(np.uint8)
 
     def __getitem__(self, index):
         """Get images and target for data loader.
@@ -64,6 +65,8 @@ class USPS(data.Dataset):
             tuple: (image, target) where target is index of the target class.
         """
         img, label = self.train_data[index], self.train_labels[index]
+        img = Image.fromarray(img, mode='L')
+        img = img.copy()
         if self.transform is not None:
             img = self.transform(img)
         return img, label.astype("int64")
@@ -104,25 +107,3 @@ class USPS(data.Dataset):
             labels = data_set[1][1]
             self.dataset_size = labels.shape[0]
         return images, labels
-
-
-class myUSPS(USPS):
-    def __init__(self, transform1, transform2):
-        super(myUSPS, self).__init__('../data', train=True, download=True, 
-                    transform=transform1)
-        self.transform2 = transform2
-
-    def __getitem__(self, index):
-        """Get images and target for data loader.
-        Args:
-            index (int): Index
-        Returns:
-            tuple: (image, target) where target is index of the target class.
-        """
-        img, label = self.train_data[index], self.train_labels[index]
-
-        if self.transform is not None:
-            img1 = self.transform(img)
-            img2 = self.transform2(img)
-
-        return img1, img2, label
